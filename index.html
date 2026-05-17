@@ -1,13 +1,174 @@
 <!DOCTYPE html>
-<html>
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>سایت من</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>صفحه شخصی من</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Tahoma', 'Vazir', system-ui, sans-serif;
+            min-height: 100vh;
+            /* تصویر زمینه - نام عکس خودت رو اینجا بذار */
+            background-image: url('my-photo.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            
+            /* برای خوانایی متن، یک لایه نیمه شفاف روی تصویر می‌ذاریم */
+            position: relative;
+        }
+
+        /* لایه تیره برای خوانایی بهتر متن روی عکس */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 0;
+        }
+
+        /* محتوای اصلی */
+        .container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* عنوان اختیاری - می‌تونی پاک کنی */
+        h1 {
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+            text-align: center;
+        }
+
+        /* دکمه‌ها */
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            background-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+            border-color: white;
+            letter-spacing: 1px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* می‌تونی هر دکمه رو رنگ متفاوت بدی - مثال: */
+        .btn-primary {
+            background-color: rgba(0, 123, 255, 0.7);
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #007bff;
+        }
+
+        .btn-success {
+            background-color: rgba(40, 167, 69, 0.7);
+            border-color: #28a745;
+        }
+        .btn-success:hover {
+            background-color: #28a745;
+        }
+
+        .btn-warning {
+            background-color: rgba(255, 193, 7, 0.7);
+            border-color: #ffc107;
+            color: #333;
+        }
+        .btn-warning:hover {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        /* برای موبایل */
+        @media (max-width: 480px) {
+            .btn {
+                padding: 12px 20px;
+                font-size: 1.1rem;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>به صفحه من خوش آمدید</h1>
+        <div class="buttons">
+            <!-- دکمه اول - لینک دلخواه -->
+            <a href="#" class="btn btn-primary" id="btn1">دکمه اول</a>
+            <!-- دکمه دوم -->
+            <a href="#" class="btn btn-success" id="btn2">دکمه دوم</a>
+            <!-- دکمه سوم -->
+            <a href="#" class="btn btn-warning" id="btn3">دکمه سوم</a>
+        </div>
+    </div>
 
-<h1>سلام 👋</h1>
-<p>این اولین سایت من روی GitHub Pages است.</p>
+    <script>
+        // اضافه کردن عملکرد به دکمه‌ها (مثال)
+        const btn1 = document.getElementById('btn1');
+        const btn2 = document.getElementById('btn2');
+        const btn3 = document.getElementById('btn3');
 
+        btn1.addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('دکمه اول کلیک شد!');
+            // اینجا می‌تونی هر کاری که می‌خوای انجام بدی
+        });
+
+        btn2.addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('دکمه دوم کلیک شد!');
+        });
+
+        btn3.addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('دکمه سوم کلیک شد!');
+        });
+    </script>
 </body>
 </html>
