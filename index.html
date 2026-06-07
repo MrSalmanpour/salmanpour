@@ -128,9 +128,8 @@
             <span>پنل ابزارهای آموزشی</span>
         </div>
         <div class="menu-items">
-            <button onclick="loadPage('exam.html', this)">📝 پنل طراحی امتحان</button>
-            
-            <button onclick="loadPage('worksheet.html', this)">📚 طراحی کاربرگ (تکلیف خانه)</button>
+            <button onclick="loadPage('./exam.html', this)">📝 پنل طراحی امتحان</button>
+            <button onclick="loadPage('./worksheet.html', this)">📚 طراحی کاربرگ (تکلیف خانه)</button>
         </div>
     </div>
 
@@ -142,3 +141,20 @@
 
         <iframe id="content-frame" src="about:blank"></iframe>
     </div>
+
+    <script>
+        function loadPage(url, btnElement) {
+            // مخفی کردن پیام راهنما
+            document.getElementById('welcome-text').style.display = 'none';
+            
+            // لود کردن فایل در iframe
+            document.getElementById('content-frame').src = url;
+
+            // مدیریت رنگ دکمه‌ها
+            let buttons = document.querySelectorAll('.menu-items button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+        }
+    </script>
+</body>
+</html>
