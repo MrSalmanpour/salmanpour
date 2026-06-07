@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل طراحی امتحان هوشمند</title>
+    
+    <style>
+        /* ==========================================
+           تنظیمات پایه و فونت‌ها
+           ========================================== */
+        @font-face { font-family: 'B Nazanin'; src: local('B Nazanin'), local('BNazanin'); }
+        @font-face { font-family: 'B Titr'; src: local('B Titr'), local('BTitr'), local('Titr'); }
+
+        body { margin: 0; padding: 0; font-family: Tahoma, Arial, sans-serif; background-color: #e0e4e8; display: flex; flex-direction: column; height: 100vh; }
+
+        /* نوار ابزار */
+        .toolbar { background-color: #2c3e50; padding: 10px 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 100; }
+        .toolbar button, .toolbar select { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; background-color: #ecf0f1; color: #2c3e50; font-family: Tahoma; font-size: 13px; transition: 0.2s; }
+        .toolbar button:hover { background-color: #bdc3c7; }
+        .primary-btn { background-color: #3498db !important; color: white !important; font-weight: bold; }
+        .success-btn { background-color: #2ecc71 !important; color: white !important; font-weight: bold; }
+        .danger-btn { background-color: #e74c3c !important; color: white !important; font-weight: bold; }
+        .warning-btn { background-color: #e67e22 !important; color: white !important; font-weight: bold; }
+        .finish-btn { background-color: #8e44ad !important; color: white !important; font-weight: bold; }
+        .answer-btn { background-color: #1abc9c !important; color: white !important; font-weight: bold; } /* استایل دکمه جدید پاسخنامه */
+        .tool-group { display: flex; gap: 5px; align-items: center; border-left: 1px solid #7f8c8d; padding-left: 10px; }
+
+        /* فضای کاری و برگه A4 */
+        .workspace { flex: 1; overflow-y: auto; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; gap: 30px; }
+        .page-wrapper { display: flex; gap: 15px; align-items: flex-start; position: relative; }
+        .a4-page { width: 210mm; height: 297mm; max-height: 297mm; background-color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.3); position: relative; box-sizing: border-box; padding: 8mm; overflow: hidden; }
+        .page-border { position: absolute; top: 5mm; bottom: 5mm; left: 5mm; right: 5mm; border: 3px double #000; pointer-events: none; z-index: 5; }
+        .page-controls { display: flex; flex-direction: column; gap: 8px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .page-controls button { background: #ecf0f1; border: none; padding: 8px; cursor: pointer; border-radius: 4px; font-size: 16px; }
+        .page-controls button:hover { background: #bdc3c7; }
+        .page-controls .del-page { color: #e74c3c; }
+
+        /* سربرگ‌ها */
+        #exam-header-container { width: 100%; margin-bottom: 5px; position: relative; z-index: 10; }
+        .header-type-1 { border: 2px solid #000; width: 100%; font-family: 'B Nazanin', Tahoma; font-size: 11pt; border-collapse: collapse; text-align: right; }
+        .header-type-1 th { text-align: center; font-family: 'B Titr', Tahoma; font-size: 12pt; padding: 5px; border-bottom: 2px solid #000; }
+        .header-type-1 td { padding: 4px 8px; border: 1px solid #000; width: 33.33%; vertical-align: middle; line-height: 1.6; }
+        .header-type-2 { border: 2px solid #000; width: 100%; font-family: 'B Nazanin', Tahoma; font-size: 11pt; border-collapse: collapse; text-align: right; }
+        .header-type-2 th { text-align: center; font-family: 'B Titr', Tahoma; font-size: 12pt; padding: 5px; border-bottom: 2px solid #000; position: relative;}
+        .header-type-2 th .date-left { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-family: 'B Nazanin', Tahoma; font-size: 10pt; font-weight: normal;}
+        .header-type-2 td { padding: 4px 8px; border: none; width: 50%; line-height: 1.6; }
+        .header-type-2 .bottom-row td { border-top: 1px dashed #ccc; }
+
+        /* جدول سوالات */
+        .exam-table { width: 100%; border-collapse: collapse; position: relative; z-index: 10; font-family: 'B Nazanin', Tahoma; font-size: 12pt; }
+        .exam-table th { border: 2px solid #000; padding: 6px; font-family: 'B Titr', Tahoma; font-size: 11pt; text-align: center; background-color: #f9f9f9; }
+        .exam-table td { border: 2px solid #000; padding: 8px; vertical-align: top; }
+        .col-radif { width: 5%; text-align: center; font-weight: bold; }
+        .col-soal { width: 85%; }
+        .col-barem { width: 10%; text-align: center; }
+        .question-content { outline: none; min-height: 25px; line-height: 1.8;}
+        .score-input { width: 100%; border: none; text-align: center; font-family: Tahoma; outline: none; background: transparent; font-size: 12pt; font-weight: bold;}
+        
+        /* دکمه‌های شناور کنار هر سوال */
+        .action-btns { position: absolute; right: -35px; top: 0; display: flex; flex-direction: column; gap: 3px; }
+        .action-btns button { cursor: pointer; background: none; border: none; font-size: 16px; padding: 2px; }
+        .del-q-btn { color: #e74c3c; }
+        .replace-q-btn { color: #3498db; }
+
+        /* مدال‌ها */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal { background: white; padding: 20px; border-radius: 10px; width: 500px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; font-family: Tahoma; }
+        .modal input, .modal select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: Tahoma;}
+        .modal h3 { margin-top: 0; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 16px;}
+        .modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
+        .form-row { display: flex; gap: 10px; }
+        
+        .radio-group { display: flex; gap: 15px; align-items: center; background: #f1f2f6; padding: 10px; border-radius: 5px;}
+        .radio-group label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 12px; font-weight: bold;}
+
+        /* کانتینر مخصوص پاسخنامه */
+        #answer-key-workspace { display: none; flex: 1; overflow-y: auto; padding: 40px 20px; flex-direction: column; align-items: center; gap: 30px; }
+
+        @media print {
+            @page { size: A4 portrait; margin: 0; }
+            body { background: none; margin: 0; padding: 0; }
+            .toolbar, .modal-overlay, .action-btns, .page-controls { display: none !important; }
+            .workspace { padding: 0; gap: 0; }
+            .page-wrapper { margin: 0; padding: 0; page-break-after: always; }
+            .a4-page { box-shadow: none; margin: 0; border: none; }
+            .score-input { border: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar">
+        <button class="primary-btn" onclick="openHeaderModal()">📝 تنظیمات سربرگ</button>
+        <button class="success-btn" onclick="openQuestionModal()">+ بانک سوال</button>
+        <button onclick="addEmptyQuestion()">+ سطر خالی</button>
+        <div class="tool-group"><button class="warning-btn" onclick="addNewPage()">📄 افزودن برگه دوم</button></div>
+
+        <div class="tool-group">
+            <button onmousedown="event.preventDefault()" onclick="execCmd('bold')"><b>B</b></button>
+            <button onmousedown="event.preventDefault()" onclick="execCmd('italic')"><i>I</i></button>
+            <button onmousedown="event.preventDefault()" onclick="execCmd('underline')"><u>U</u></button>
+            <div style="border-right: 1px solid #7f8c8d; margin: 0 5px; height: 20px;"></div>
+            <button onmousedown="event.preventDefault()" onclick="changeFontSizeExact('12')">سایز ۱۲</button>
+            <button onmousedown="event.preventDefault()" onclick="changeFontSizeExact('14')">سایز ۱۴</button>
+            <button onmousedown="event.preventDefault()" onclick="changeFontSizeExact('16')">سایز ۱۶</button>
+        </div>
+        
+        <div style="flex-grow: 1;"></div>
+        <button class="finish-btn" onclick="finishExam()">🏁 اتمام امتحان</button>
+        <button class="answer-btn" onclick="printAnswerKey()">📑 دانلود پاسخنامه</button>
+        <button class="danger-btn" onclick="window.print()">دانلود PDF سوالات</button>
+    </div>
+
+    <div class="workspace" id="workspace">
+        <div class="page-wrapper" id="page-1">
+            <div class="a4-page">
+                <div class="page-border"></div>
+                
+                <div id="exam-header-container">
+                    <table class="header-type-2" contenteditable="true">
+                        <thead><tr><th colspan="2">به نام هستی بخش یکتا<span class="date-left">تاریخ: ۱۴۰۳/۰۳/۱۲</span></th></tr></thead>
+                        <tbody>
+                            <tr><td><b>مدرسه:</b> دبستان شاهد<br><b>نام و نام خانوادگی:</b> ........................</td><td><b>نام درس:</b> علوم تجربی<br><b>پایه:</b> ششم ابتدایی</td></tr>
+                            <tr class="bottom-row"><td colspan="2" style="text-align: center;"><b>آموزگار:</b> مهدی سلمان پور</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <table class="exam-table">
+                    <thead>
+                        <tr>
+                            <th class="col-radif">ردیف</th>
+                            <th class="col-soal">شــــرح ســــوال و پاســــخ</th>
+                            <th class="col-barem">بارم</th>
+                        </tr>
+                    </thead>
+                    <tbody class="questions-list"></tbody>
+                </table>
+                
+                <div id="signature-container" style="position: relative; z-index: 10;"></div>
+            </div>
+            <div class="page-controls">
+                <button onclick="deletePage(this)" class="del-page" title="حذف این صفحه">🗑️</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="workspace" id="answer-key-workspace"></div>
+
+    <div class="modal-overlay" id="headerModal">
+        <div class="modal">
+            <h3>تنظیمات سربرگ امتحان</h3>
+            <select id="h_template">
+                <option value="type1">قالب ۱ (سه ستونه - دبیرستان/رسمی)</option>
+                <option value="type2" selected>قالب ۲ (دو ستونه - ابتدایی)</option>
+            </select>
+            <div class="form-row">
+                <input type="text" id="h_school" placeholder="نام مدرسه" value="دبستان شاهد">
+                <input type="text" id="h_teacher" placeholder="نام آموزگار" value="مهدی سلمان پور">
+            </div>
+            <div class="form-row">
+                <input list="subjects-list" id="h_subject" placeholder="نام درس" value="علوم تجربی">
+                <datalist id="subjects-list">
+                    <option value="علوم تجربی">
+                    <option value="ریاضی">
+                    <option value="فارسی بخوانیم">
+                    <option value="املا و نگارش">
+                    <option value="مطالعات اجتماعی">
+                    <option value="هدیه‌های آسمان">
+                    <option value="آموزش قرآن">
+                </datalist>
+                <input type="text" id="h_grade" placeholder="پایه / کلاس" value="ششم ابتدایی">
+            </div>
+            <div class="form-row">
+                <input type="text" id="h_date" placeholder="تاریخ امتحان" value="۱۴۰۳/۰۳/۱۲">
+                <input type="text" id="h_time" placeholder="مدت امتحان" value="۶۰ دقیقه">
+            </div>
+            <div class="modal-btns">
+                <button onclick="closeModal('headerModal')" style="background:#95a5a6; color:white;">انصراف</button>
+                <button onclick="generateHeader()" class="primary-btn">اعمال تغییرات</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="questionModal">
+        <div class="modal">
+            <h3>تنظیمات بانک سوالات هوشمند</h3>
+            <div class="form-row">
+                <div style="flex:1;">
+                    <label style="font-size: 12px;">پایه تحصیلی:</label>
+                    <select id="q_grade">
+                        <option value="grade1">پایه اول</option>
+                        <option value="grade2">پایه دوم</option>
+                        <option value="grade3">پایه سوم</option>
+                        <option value="grade4">پایه چهارم</option>
+                        <option value="grade5">پایه پنجم</option>
+                        <option value="grade6" selected>پایه ششم</option>
+                    </select>
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size: 12px;">نام درس (فایل دیتابیس):</label>
+                    <select id="q_subject">
+                        <option value="science">علوم (science.json)</option>
+                        <option value="math">ریاضی (math.json)</option>
+                        <option value="farsi">فارسی بخوانیم (farsi.json)</option>
+                        <option value="dictation">املا و نگارش (dictation.json)</option>
+                        <option value="social">مطالعات اجتماعی (social.json)</option>
+                        <option value="gifts">هدیه‌های آسمان (gifts.json)</option>
+                        <option value="quran">آموزش قرآن (quran.json)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div style="flex:1;"><label style="font-size: 12px;">از صفحه:</label><input type="number" id="q_page_from" value="1"></div>
+                <div style="flex:1;"><label style="font-size: 12px;">تا صفحه:</label><input type="number" id="q_page_to" value="200"></div>
+            </div>
+
+            <div class="form-row">
+                <div style="flex:2;">
+                    <label style="font-size: 12px;">نوع سوال:</label>
+                    <select id="q_type">
+                        <option value="tf">صحیح / غلط</option>
+                        <option value="blank">جای خالی</option>
+                        <option value="mc">چهار گزینه‌ای</option>
+                        <option value="short">پاسخ کوتاه</option>
+                        <option value="long">تشریحی (بلند)</option>
+                    </select>
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size: 12px;">سطح دشواری:</label>
+                    <select id="q_diff">
+                        <option value="all">همه</option>
+                        <option value="easy">آسان</option>
+                        <option value="medium">متوسط</option>
+                        <option value="hard">سخت</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row" style="background:#f9f9f9; padding: 10px; border-radius: 5px;">
+                <div style="flex:1;">
+                    <label style="font-size: 12px; font-weight:bold; color:#2c3e50;">تعداد سوال:</label>
+                    <input type="number" id="q_count" value="4" min="1" max="20">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size: 12px; font-weight:bold; color:#2c3e50;">بارم تخصیصی:</label>
+                    <input type="text" id="q_score" value="1" title="نمره‌ای که اینجا می‌زنید برای کل سوالات یا تک‌سوال ثبت می‌شود">
+                </div>
+            </div>
+
+            <div class="radio-group">
+                <span style="font-size: 12px; color: #2c3e50;">نحوه درج:</span>
+                <label>
+                    <input type="radio" name="q_grouping" value="grouped" checked>
+                    گروهی (در یک کادر با بارم واحد)
+                </label>
+                <label>
+                    <input type="radio" name="q_grouping" value="separate">
+                    مستقل (هر سوال مجزا)
+                </label>
+            </div>
+
+            <div class="modal-btns">
+                <button onclick="closeModal('questionModal')" style="background:#95a5a6; color:white;">انصراف</button>
+                <button onclick="generateQuestionFromBank()" class="success-btn">استخراج و افزودن</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onerror = function(msg, url, line) { alert("خطا:\n" + msg + "\nخط: " + line); return false; };
+
+        const questionPrefixes = {
+            tf: "جملات صحیح و غلط را مشخص کنید:",
+            blank: "جاهای خالی را با کلمات مناسب پر کنید:",
+            mc: "در سوالات زیر گزینه صحیح را انتخاب کنید:",
+            short: "به سوالات زیر پاسخ کوتاه دهید:",
+            long: "به سوالات زیر به طور مشروح پاسخ دهید:"
+        };
+
+        const persianLetters = ['الف', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح', 'ط', 'ی', 'ک', 'ل', 'م', 'ن'];
+
+        function openHeaderModal() { document.getElementById('headerModal').style.display = 'flex'; }
+        function openQuestionModal() { document.getElementById('questionModal').style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function generateHeader() {
+            const container = document.getElementById('exam-header-container');
+            if (!container) { alert("برگه اول پاک شده است!"); return; }
+            
+            const type = document.getElementById('h_template').value;
+            const school = document.getElementById('h_school').value;
+            const teacher = document.getElementById('h_teacher').value;
+            const subject = document.getElementById('h_subject').value;
+            const grade = document.getElementById('h_grade').value;
+            const date = document.getElementById('h_date').value;
+            const time = document.getElementById('h_time').value;
+
+            let html = '';
+            if (type === 'type1') {
+                html = `<table class="header-type-1" contenteditable="true">
+                    <thead><tr><th colspan="3">{ ز گهواره تا گور دانش بجوی }</th></tr></thead>
+                    <tbody><tr>
+                        <td><b>مدرسه:</b> ${school}<br><b>نام و نام خانوادگی:</b> ..................<br><b>نام دبیر:</b> ${teacher}</td>
+                        <td><b>نام درس:</b> ${subject}<br><b>پایه:</b> ${grade}<br><b>سال تحصیلی:</b> ۱۴۰۴-۱۴۰۵</td>
+                        <td><b>ساعت شروع:</b> ۰۸:۰۰<br><b>مدت امتحان:</b> ${time}<br><b>تاریخ:</b> ${date}</td>
+                    </tr></tbody></table>`;
+            } else {
+                html = `<table class="header-type-2" contenteditable="true">
+                    <thead><tr><th colspan="2">به نام هستی بخش یکتا<span class="date-left">تاریخ: ${date}</span></th></tr></thead>
+                    <tbody>
+                        <tr><td><b>مدرسه:</b> ${school}<br><b>نام و نام خانوادگی:</b> ........................</td><td><b>نام درس:</b> ${subject}<br><b>پایه:</b> ${grade}</td></tr>
+                        <tr class="bottom-row"><td colspan="2" style="text-align: center;"><b>آموزگار:</b> ${teacher}</td></tr>
+                    </tbody></table>`;
+            }
+            container.innerHTML = html;
+            closeModal('headerModal');
+        }
+
+        let questionCount = 0;
+
+        // تابع آپدیت شده: دریافت پارامتر پاسخنامه و مخفی کردن آن در ردیف
+        function addQuestionRow(questionHTML, score, meta, answerHTML) {
+            const allLists = document.querySelectorAll('.questions-list');
+            if(allLists.length === 0) return alert("برگه‌ای یافت نشد!");
+            const targetTbody = allLists[allLists.length - 1]; 
+            
+            questionCount++;
+            const tr = document.createElement('tr');
+            
+            tr.setAttribute('data-grade', meta.grade || 'all');
+            tr.setAttribute('data-subject', meta.subject || 'all');
+            tr.setAttribute('data-type', meta.type || 'none');
+            tr.setAttribute('data-pfrom', meta.pageFrom || 0);
+            tr.setAttribute('data-pto', meta.pageTo || 999);
+            tr.setAttribute('data-diff', meta.diff || 'all');
+            tr.setAttribute('data-count', meta.count || 1);
+            tr.setAttribute('data-grouping', meta.grouping || 'separate');
+            
+            // اضافه شدن دیتا مربوط به پاسخ
+            tr.setAttribute('data-answer', answerHTML || 'پاسخی در بانک ثبت نشده است.');
+
+            tr.innerHTML = `
+                <td class="col-radif" style="position:relative;">
+                    <div class="action-btns">
+                        <button class="del-q-btn" onclick="deleteRow(this)" title="حذف سوال">✖</button>
+                        <button class="replace-q-btn" onclick="replaceQuestion(this)" title="تغییر این سوال با سوالی جدید از بانک">🔄</button>
+                    </div>
+                    <span class="row-number">${questionCount}</span>
+                </td>
+                <td class="col-soal"><div class="question-content" contenteditable="true">${questionHTML}</div></td>
+                <td class="col-barem"><input type="text" class="score-input" value="${score}"></td>
+            `;
+            targetTbody.appendChild(tr);
+            document.getElementById('workspace').scrollTo({ top: document.getElementById('workspace').scrollHeight, behavior: 'smooth' });
+        }
+
+        function addEmptyQuestion() { 
+            addQuestionRow("سوال خود را تایپ کنید...", "1", { type: 'custom' }, "پاسخ این سوال را در صورت نیاز بعداً اضافه کنید."); 
+        }
+
+        async function fetchQuestionsData(grade, subject) {
+            const filePath = `./${grade}/${subject}.json`;
+            try {
+                const response = await fetch(filePath);
+                if (!response.ok) throw new Error();
+                return await response.json();
+            } catch (error) {
+                throw new Error(filePath);
+            }
+        }
+
+        async function generateQuestionFromBank() {
+            const grade = document.getElementById('q_grade').value; 
+            const subject = document.getElementById('q_subject').value;
+            const type = document.getElementById('q_type').value;
+            const pageFrom = parseInt(document.getElementById('q_page_from').value) || 0;
+            const pageTo = parseInt(document.getElementById('q_page_to').value) || 999;
+            const diff = document.getElementById('q_diff').value;
+            const count = parseInt(document.getElementById('q_count').value) || 1;
+            const score = document.getElementById('q_score').value;
+            const grouping = document.querySelector('input[name="q_grouping"]:checked').value;
+
+            try {
+                const questionsList = await fetchQuestionsData(grade, subject);
+
+                const filtered = questionsList.filter(q => 
+                    q.type === type && 
+                    q.page >= pageFrom && q.page <= pageTo &&
+                    (diff === 'all' || q.diff === diff)
+                );
+
+                if (filtered.length === 0) {
+                    alert(`سوالی با این مشخصات در صفحات ${pageFrom} تا ${pageTo} پیدا نشد.`);
+                    return;
+                }
+
+                const shuffled = filtered.sort(() => 0.5 - Math.random());
+                const selected = shuffled.slice(0, count);
+
+                if (selected.length < count) {
+                    alert(`فقط ${selected.length} سوال با این مشخصات یافت شد. همان تعداد اضافه می‌شود.`);
+                }
+
+                const meta = { grade, subject, type, pageFrom, pageTo, diff, count: selected.length, grouping };
+
+                if (grouping === 'grouped' && selected.length > 0) {
+                    let combinedText = `<b>${questionPrefixes[type] || 'به سوالات زیر پاسخ دهید:'}</b><br><br>`;
+                    let combinedAnswer = ''; // متغیر برای جمع‌آوری پاسخ‌ها
+                    
+                    selected.forEach((q, index) => {
+                        let letter = persianLetters[index] || '-';
+                        combinedText += `${letter}) ${q.text}<br><br>`;
+                        combinedAnswer += `<b>${letter})</b> ${q.answer || 'بدون پاسخ'}<br><br>`;
+                    });
+                    
+                    addQuestionRow(combinedText, score, meta, combinedAnswer);
+                } else {
+                    selected.forEach(q => {
+                        addQuestionRow(q.text, score, { ...meta, count: 1 }, q.answer || 'بدون پاسخ');
+                    });
+                }
+                
+                closeModal('questionModal');
+
+            } catch (error) {
+                alert(`⚠️ خطا در خواندن بانک سوالات!\n\nدیتابیس در مسیر ${error.message} پیدا نشد.\nلطفاً مطمئن شوید پوشه و فایل JSON با ساختار صحیح ایجاد شده‌اند و پنل روی لوکال‌هاست اجرا می‌شود.`);
+            }
+        }
+
+        async function replaceQuestion(btn) {
+            const tr = btn.closest('tr');
+            const grade = tr.getAttribute('data-grade');
+            const subject = tr.getAttribute('data-subject');
+            const type = tr.getAttribute('data-type');
+            const pageFrom = parseInt(tr.getAttribute('data-pfrom'));
+            const pageTo = parseInt(tr.getAttribute('data-pto'));
+            const diff = tr.getAttribute('data-diff');
+            const count = parseInt(tr.getAttribute('data-count'));
+            const grouping = tr.getAttribute('data-grouping');
+
+            if(type === 'custom' || type === 'none') {
+                alert("این ردیف به صورت دستی ساخته شده و قابل تغییر با بانک نیست.");
+                return;
+            }
+
+            try {
+                const questionsList = await fetchQuestionsData(grade, subject);
+                const filtered = questionsList.filter(q => 
+                    q.type === type && 
+                    q.page >= pageFrom && q.page <= pageTo &&
+                    (diff === 'all' || q.diff === diff)
+                );
+
+                if (filtered.length < count) {
+                    alert("سوالات کافی در بانک برای جایگزینی وجود ندارد.");
+                    return;
+                }
+
+                const shuffled = filtered.sort(() => 0.5 - Math.random());
+                const selected = shuffled.slice(0, count);
+
+                let newHTML = '';
+                let newAnswer = ''; // آپدیت کردن پاسخ
+                
+                if (grouping === 'grouped') {
+                    newHTML = `<b>${questionPrefixes[type] || 'به سوالات زیر پاسخ دهید:'}</b><br><br>`;
+                    selected.forEach((q, index) => {
+                        let letter = persianLetters[index] || '-';
+                        newHTML += `${letter}) ${q.text}<br><br>`;
+                        newAnswer += `<b>${letter})</b> ${q.answer || 'بدون پاسخ'}<br><br>`;
+                    });
+                } else {
+                    newHTML = selected[0].text;
+                    newAnswer = selected[0].answer || 'بدون پاسخ';
+                }
+
+                tr.querySelector('.question-content').innerHTML = newHTML;
+                tr.setAttribute('data-answer', newAnswer); // قرار دادن پاسخ جدید در تگ
+                
+                tr.style.backgroundColor = '#e8f8f5'; 
+                setTimeout(() => tr.style.backgroundColor = '', 500);
+
+            } catch(error) {
+                alert("خطا در اتصال مجدد به بانک سوالات.");
+            }
+        }
+
+        function finishExam() {
+            const allLists = document.querySelectorAll('.questions-list');
+            if(allLists.length === 0) return alert("برگه‌ای یافت نشد!");
+
+            const oldTotal = document.querySelector('.total-row');
+            if(oldTotal) oldTotal.remove();
+
+            let totalScore = 0;
+            document.querySelectorAll('.score-input').forEach(inp => {
+                let enDigit = inp.value.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+                let val = parseFloat(enDigit);
+                if (!isNaN(val)) totalScore += val;
+            });
+
+            const targetTbody = allLists[allLists.length - 1]; 
+            const tr = document.createElement('tr');
+            tr.className = "total-row";
+            
+            tr.innerHTML = `
+                <td colspan="2" style="text-align: center; font-family: 'B Titr', Tahoma; font-size: 15pt; color: #2c3e50;">موفق و پیروز باشید</td>
+                <td style="text-align: center; font-weight: bold; font-family: Tahoma; font-size: 14pt;">${totalScore}</td>
+            `;
+            targetTbody.appendChild(tr);
+
+            const currentA4 = targetTbody.closest('.a4-page');
+            let signContainer = currentA4.querySelector('#signature-container');
+            
+            if(!signContainer) {
+                signContainer = document.createElement('div');
+                signContainer.id = 'signature-container';
+                signContainer.style.marginTop = "20px";
+                signContainer.style.display = "flex";
+                signContainer.style.justifyContent = "flex-end";
+                signContainer.style.fontFamily = "'B Nazanin', Tahoma";
+                signContainer.style.fontSize = "14pt";
+                signContainer.style.position = "relative";
+                signContainer.style.zIndex = "10";
+                currentA4.appendChild(signContainer);
+            }
+            
+            signContainer.innerHTML = `
+                <div style="border: 1px dashed #000; padding: 10px; width: 300px; min-height: 80px; text-align: right;">
+                    <b>نظرات و امضای آموزگار:</b>
+                </div>
+            `;
+            
+            document.getElementById('workspace').scrollTo({ top: document.getElementById('workspace').scrollHeight, behavior: 'smooth' });
+        }
+
+        // ==========================================
+        // تولید و دانلود پاسخنامه
+        // ==========================================
+        function printAnswerKey() {
+            // پیدا کردن تمام ردیف‌های سوال (بدون محاسبه ردیف اتمام امتحان)
+            const rows = document.querySelectorAll('.questions-list tr:not(.total-row)');
+            if(rows.length === 0) return alert("هیچ سوالی در برگه امتحان وجود ندارد تا پاسخنامه‌ای برای آن تولید شود!");
+
+            // ساخت کدهای HTML پاسخنامه
+            let answerHTML = `
+                <div class="page-wrapper">
+                    <div class="a4-page">
+                        <div class="page-border"></div>
+                        <h2 style="text-align:center; font-family:'B Titr', Tahoma; margin-bottom: 20px;">پاسخنامه تشریحی امتحان</h2>
+                        <table class="exam-table">
+                            <thead><tr><th style="width:10%;">ردیف</th><th>پاسخ صحیح</th></tr></thead>
+                            <tbody>
+            `;
+
+            rows.forEach((tr) => {
+                let radif = tr.querySelector('.row-number').innerText;
+                let answer = tr.getAttribute('data-answer') || "پاسخی یافت نشد.";
+                
+                answerHTML += `
+                    <tr>
+                        <td style="text-align:center; font-weight:bold;">${radif}</td>
+                        <td style="line-height:1.8;">${answer}</td>
+                    </tr>
+                `;
+            });
+
+            answerHTML += `</tbody></table></div></div>`;
+
+            // جابجایی هوشمند بین صفحه امتحان و پاسخنامه
+            const mainWorkspace = document.getElementById('workspace');
+            const ansWorkspace = document.getElementById('answer-key-workspace');
+            
+            ansWorkspace.innerHTML = answerHTML;
+            
+            mainWorkspace.style.display = 'none';
+            ansWorkspace.style.display = 'flex';
+
+            // دادن تاخیر کوتاه برای اعمال استایل‌ها و سپس پرینت
+            setTimeout(() => {
+                window.print();
+                
+                // برگرداندن صفحه به حالت اول
+                mainWorkspace.style.display = 'flex';
+                ansWorkspace.style.display = 'none';
+            }, 300);
+        }
+
+        function deleteRow(btn) { btn.closest('tr').remove(); updateRowNumbers(); }
+        function updateRowNumbers() {
+            const rows = document.querySelectorAll('.row-number');
+            questionCount = 0;
+            rows.forEach(span => { questionCount++; span.innerText = questionCount; });
+        }
+
+        function addNewPage() {
+            const workspace = document.getElementById('workspace');
+            const newPage = document.createElement('div');
+            newPage.className = 'page-wrapper';
+            newPage.innerHTML = `
+                <div class="a4-page">
+                    <div class="page-border"></div>
+                    <table class="exam-table" style="margin-top: 10px;">
+                        <thead><tr><th class="col-radif">ردیف</th><th class="col-soal">شرح سوال و پاسخ (ادامه برگه قبل)</th><th class="col-barem">بارم</th></tr></thead>
+                        <tbody class="questions-list"></tbody>
+                    </table>
+                </div>
+                <div class="page-controls"><button onclick="deletePage(this)" class="del-page" title="حذف برگه">🗑️</button></div>
+            `;
+            workspace.appendChild(newPage);
+            document.getElementById('workspace').scrollTo({ top: document.getElementById('workspace').scrollHeight, behavior: 'smooth' });
+        }
+
+        function deletePage(btn) { if(confirm("آیا از حذف این صفحه و سوالات آن مطمئن هستید؟")) { btn.closest('.page-wrapper').remove(); updateRowNumbers(); } }
+        function execCmd(command, value = null) { document.execCommand(command, false, value); }
+        function changeFontSizeExact(sizePt) { if(!sizePt) return; document.execCommand("fontSize", false, "7"); let fonts = document.querySelectorAll("font[size='7']"); fonts.forEach(f => { f.removeAttribute("size"); f.style.fontSize = sizePt + "pt"; }); }
+    </script>
+</body>
+</html>
